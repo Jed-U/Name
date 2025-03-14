@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Counter</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            margin: 50px;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+        }
+        .counter-box {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .counter {
+            font-size: 4.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #222;
+        }
+        button {
+            padding: 15px 35px;
+            margin: 10px;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            font-weight: bold;
+        }
+        .increase { background-color: #28a745; color: white; }
+        .decrease { background-color: #dc3545; color: white; }
+        .reset { background-color: #007bff; color: white; }
+        .save { background-color: #ffc107; color: black; }
+        .load { background-color: #17a2b8; color: white; }
+        .double { background-color: #6610f2; color: white; }
+        .half { background-color: #fd7e14; color: white; }
+        .input-box {
+            margin-top: 15px;
+            font-size: 1.2em;
+        }
+        input {
+            padding: 10px;
+            width: 80px;
+            text-align: center;
+            font-size: 1.2em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button:hover {
+            transform: scale(1.15);
+            opacity: 0.9;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Counter</h1>
+    <div class="counter-box">
+        <p class="counter" id="counter">0</p>
+        <div class="input-box">
+            <input type="number" id="customAmount" step="0.01" placeholder="0.00">
+            <button onclick="customChange()">Add/Subtract</button>
+        </div>
+        <button class="increase" onclick="changeCounter(1)">Increase</button>
+        <button class="decrease" onclick="changeCounter(-1)">Decrease</button>
+        <button class="double" onclick="doubleCounter()">Double</button>
+        <button class="half" onclick="halfCounter()">Halve</button>
+        <button class="reset" onclick="resetCounter()">Reset</button>
+        <button class="save" onclick="saveCounter()">Save</button>
+        <button class="load" onclick="loadCounter()">Load</button>
+    </div>
+    
+    <script>
+        let counter = localStorage.getItem("counter") ? parseFloat(localStorage.getItem("counter")) : 0;
+        document.getElementById("counter").textContent = counter.toFixed(2);
+
+        function changeCounter(amount) {
+            counter += amount;
+            updateCounter();
+        }
+
+        function doubleCounter() {
+            counter *= 2;
+            updateCounter();
+        }
+
+        function halfCounter() {
+            counter /= 2;
+            updateCounter();
+        }
+
+        function resetCounter() {
+            counter = 0;
+            updateCounter();
+        }
+
+        function saveCounter() {
+            localStorage.setItem("counter", counter);
+            alert("Counter saved!");
+        }
+
+        function loadCounter() {
+            counter = localStorage.getItem("counter") ? parseFloat(localStorage.getItem("counter")) : 0;
+            updateCounter();
+            alert("Counter loaded!");
+        }
+
+        function customChange() {
+            let customValue = parseFloat(document.getElementById("customAmount").value);
+            if (!isNaN(customValue)) {
+                counter += customValue;
+                updateCounter();
+            } else {
+                alert("Please enter a valid number.");
+            }
+        }
+
+        function updateCounter() {
+            document.getElementById("counter").textContent = counter.toFixed(2);
+        }
+    </script>
+</body>
+</html>

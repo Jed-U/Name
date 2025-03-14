@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Chess Game with Levels</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <style>
+        body {
+            background-image: url('https://source.unsplash.com/1600x900/?chess');
+            background-size: cover;
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #board {
+            width: 400px;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 20px;
+            color: white;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        select, button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: black;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover, select:hover {
+            background-color: gray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Classic Chess Game with Levels</h1>
+    <div class="controls">
+        <label for="level">Select AI Difficulty: </label>
+        <select id="level">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+    <div class="board-container">
+        <div id="board"></div>
+    </div>
+    <p id="status">White to move</p>
+    <div class="controls">
+        <button id="restart">Restart Game</button>
+        <button id="undo">Undo Move</button>
+    </div>
+    <script>
+        var board = null;
+        var game = new Chess();
+        var moveHistory = [];
+        var aiLevel = "easy";  // Default level
+
+        function onDragStart(source, piece) {
+            if (game.game_over() || (game.turn() === 'w' && piece.search(/^b/) !== -1) || (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        }
+
+        function onDrop(source, target) {
+            var move = game.move({ from: source, to: target, promotion: 'q' });
+            if (move === null) return 'snapback';
+            moveHistory.push(move);
+            board.position(game.fen());
+            updateStatus();
+            setTimeout(makeAIMove, 500);
+        }
+
+        function updateStatus() {
+            var status = '';
+            if (game.in_checkmate()) {
+                status = 'Checkmate! ' + (game.turn() === 'w' ? 'Black' : 'White') + ' wins!';
+            } else if (game.in_draw()) {
+                status = 'Game Drawn!';
+            } else {
+                status = (game.turn() === 'w' ? 'White' : 'Black') + ' to move';
+                if (game.in_check()) {
+                    status += ' - Check!';
+                }
+            }
+            document.getElementById('status').innerText = status;
+        }
+
+        function makeAIMove() {
+            if (game.game_over()) return;
+
+            let bestMove;
+            switch (aiLevel) {
+                case "easy":
+                    bestMove = getRandomMove();
+                    break;
+                case "medium":
+                    bestMove = getBestMove(1);
+                    break;
+                case "hard":
+                    bestMove = getBestMove(2);
+                    break;
+            }
+
+            if (bestMove) {
+                game.move(bestMove);
+                board.position(game.fen());
+                updateStatus();
+            }
+        }
+
+        function getRandomMove() {
+            var possibleMoves = game.moves();
+            return possibleMoves.length ? possibleMoves[Math.floor(Math.random() * possibleMoves.length)] : null;
+        }
+
+        function getBestMove(depth) {
+            return minimax(game, depth, true).move;
+        }
+
+        function minimax(gameState, depth, isMaximizing) {
+            if (depth === 0 || gameState.game_over()) {
+                return { evaluation: evaluateBoard(gameState) };
+            }
+
+            var bestMove = null;
+            var bestEval = isMaximizing ? -Infinity : Infinity;
+            var moves = gameState.moves();
+
+            for (var i = 0; i < moves.length; i++) {
+                gameState.move(moves[i]);
+                var eval = minimax(gameState, depth - 1, !isMaximizing).evaluation;
+                gameState.undo();
+
+                if (isMaximizing ? eval > bestEval : eval < bestEval) {
+                    bestEval = eval;
+                    bestMove = moves[i];
+                }
+            }
+
+            return { move: bestMove, evaluation: bestEval };
+        }
+
+        function evaluateBoard(gameState) {
+            var values = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+            var evaluation = 0;
+            var board = gameState.board();
+
+            for (var row of board) {
+                for (var square of row) {
+                    if (square) {
+                        evaluation += (square.color === 'w' ? 1 : -1) * values[square.type];
+                    }
+                }
+            }
+
+            return evaluation;
+        }
+
+        document.getElementById('level').addEventListener('change', function() {
+            aiLevel = this.value;
+        });
+
+        document.getElementById('restart').addEventListener('click', function() {
+            game.reset();
+            moveHistory = [];
+            board.position('start');
+            updateStatus();
+        });
+
+        document.getElementById('undo').addEventListener('click', function() {
+            if (moveHistory.length > 0) {
+                game.undo();
+                moveHistory.pop();
+                board.position(game.fen());
+                updateStatus();
+            }
+        });
+
+        $(document).ready(function() {
+            board = Chessboard('board', {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+        });
+    </script>
+</body>
+</html>
